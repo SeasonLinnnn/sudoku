@@ -147,3 +147,85 @@ bool sudoku::is_right(int current_sudoku_index, int row, int column, int num, in
 	}
 	return true;
 }
+void sudoku::gen_sudoku(int num, int level, int* holeNumber, bool ifOnly)
+{
+	//先生成所有的数独终局，然后再挖洞
+	gen_sudoku_result(num);
+	int row = 0, column = 0;
+	//自定义空格数的情况
+	if ((level < 1 || level>3) && holeNumber != nullptr && ifOnly == false)
+	{
+		for (int currSudoku = 0; currSudoku < num; currSudoku++)
+		{
+			srand(time(NULL));
+			int totalHole = rand() % (holeNumber[1] - holeNumber[0]) + holeNumber[0];
+			for (int i = 0; i < totalHole; i++)
+			{
+				srand(time(NULL));
+				int currHole = rand() % 81;
+				row = currHole / 9;
+				column = currHole % 9;
+				if (result[currSudoku * 9 + row][column] != 0)
+					result[currSudoku * 9 + row][column] = 0;
+				else
+					i--;
+			}
+		}
+	}
+	//生成唯一解
+	else if (ifOnly)
+	{
+		for (int currSudoku = 0; currSudoku < num; currSudoku++)
+		{
+			srand(time(NULL));
+			int totalHole = rand() % 20 + 10;
+			for (int i = 0; i < totalHole; i++)
+			{
+				srand(time(NULL));
+				int currHole = rand() % 81;
+				row = currHole / 9;
+				column = currHole % 9;
+				if (result[currSudoku * 9 + row][column] != 0 && is_unique(currSudoku, row, column, result[currSudoku * 9 + row][column],result))
+					result[currSudoku * 9 + row][column] = 0;
+				else
+					i--;
+			}
+		}
+	}
+	//分等级
+	else
+	{
+		int leveledNum = 0;
+		switch (level)
+		{
+		case 1:
+			leveledNum = 20;
+			break;
+		case 2:
+			leveledNum = 40;
+			break;
+		case 3:
+			leveledNum = 60;
+			break;
+		default:
+			leveledNum = 20;
+			break;
+		}
+		for (int currSudoku = 0; currSudoku < num; currSudoku++)
+		{
+			srand(time(NULL));
+			int totalHole = rand() % leveledNum + 10;
+			for (int i = 0; i < totalHole; i++)
+			{
+				srand(time(NULL));
+				int currHole = rand() % 81;
+				row = currHole / 9;
+				column = currHole % 9;
+				if (result[currSudoku * 9 + row][column] != 0)
+					result[currSudoku * 9 + row][column] = 0;
+				else
+					i--;
+			}
+		}
+	}
+}
