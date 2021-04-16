@@ -229,75 +229,134 @@ void sudoku::gen_sudoku(int num, int level, int* holeNumber, bool ifOnly)
 		}
 	}
 }
-bool sudoku::dfs(int current_sudoku_index, int row, int column, int sudo[][9])
+int main(int argc, char** argv)
 {
-	/*数独应该是9*9的,也就是说行和列都应该是0-8中的数字,所以顺序遍历应该第一个不合规的是第九行第十个数*/
-	if (column == 9)
+	sudoku sudo;
+	if (argc < 3)
 	{
-		if (row == 8)
-			return true;
-		//否则应该换到下一行
-		row++;
-		column = 0;
+		cout << "指令不合法：参数过少" << endl;
+		return 0;
 	}
-	//若当前空格有数，就递归下一个位置
-	if (sudo[current_sudoku_index * 9 + row][column] != 0)
+	else if (argc == 3)
 	{
-		return dfs(current_sudoku_index, row, column + 1, sudo);
-	}
-	//若当前空格没有数字，就从1-9试
-	for (int i = 1; i < 10; i++)
-	{
-		if (is_right(current_sudoku_index, row, column, i, sudo))
+		if (strcmp(argv[1], "-c") == 0)//生成数独终局 
 		{
-			sudo[current_sudoku_index * 9 + row][column] = i;
-			//再进行后面的空格填数，如果都成功了就直接返回，反之如果后续有
-			//无法满足的就会返回到这里换一个数进行尝试
-			if (dfs(current_sudoku_index, row, column + 1, sudo))
-				return true;
+			int n = atoi(argv[2]);
+			if (n <= 0)
+			{
+				cout << "指令不合法：数独个数范围为1~1,000,000" << endl;
+				return 0;
+			}
+			if (n > 1000000)
+			{
+				cout << "指令不合法：数独个数范围为1~1,000,000" << endl;
+				return 0;
+			}
+			sudo.gen_sudoku_result(n);
+			sudo.makesudokutofile(n);
+			return 0;
+		}
+		if (strcmp(argv[1], "-s") == 0)//解数独 
+		{
+			sudo.solve_sudoku(argv[2]);
+			return 0;
+		}
+		if (strcmp(argv[1], "-n") == 0)//生成数独游戏
+		{
+			int n = atoi(argv[2]);
+			if (n > 10000 || n < 1)
+			{
+				cout << "指令不合法：数独游戏个数范围为1~10,000" << endl;
+				return 0;
+			}
+			sudo.gen_sudoku(n, 0, nullptr, false);
+			sudo.makesudokutofile(n);
+			return 0;
 		}
 	}
-	sudo[current_sudoku_index * 9 + row][column] = 0;
-	return false;
-}
-void sudoku::solve_sudoku(string filepath)
-{
-	ifstream readFile;
-	readFile.open(filepath.c_str());
-	if (readFile.is_open() == FALSE)
+	else if (argc == 4)
 	{
-		cout << "文件读取失败！请重试！" << endl;
-		return;
-	}
-	//读取的数字个数
-	int totalNumber = 0;
-	while (!readFile.eof())
-	{
-		readFile >> sudokuIn[totalNumber++];
-	}
-	//总行数
-	int row = totalNumber / 9;
-	//将char型转换成int型进行存储
-	int currentIndex = 0;
-	memset(result, 0, sizeof(result));
-	for (int i = 0; i < row; i++)
-	{
-		for (int j = 0; j < 9; j++)
+		if ((strcmp(argv[1], "-n") == 0) && (strcmp(argv[3], "-u") == 0))
 		{
-			if (sudokuIn[currentIndex] == '$')
-				result[i][j] = 0;
-			else
-				result[i][j] = sudokuIn[currentIndex] - '0';
-			currentIndex++;
+			int n = atoi(argv[2]);
+			if (n > 10000 || n < 1)
+			{
+				cout << "指令不合法：数独游戏个数范围为1~10,000" << endl;
+				return 0;
+			}
+			sudo.gen_sudoku(n, 0, nullptr, true);
+			sudo.makesudokutofile(n);
+			return 0;
+		}
+		else
+		{
+			cout << "指令不合法：指令格式为【sudoku.exe -n 20 -u】" << endl;
+			return 0;
 		}
 	}
-	//数独个数
-	int sudokuNumber = row / 9;
-	//深度优先对每个数独进行求解
-	for (int curSudoku = 0; curSudoku < sudokuNumber; curSudoku++)
+	else if (argc == 5)
 	{
-		dfs(curSudoku, 0, 0, result);
+		if ((strcmp(argv[1], "-n") == 0) && (strcmp(argv[3], "-m") == 0))
+		{
+			int n = atoi(argv[2]);
+			if (n > 10000 || n < 1)
+			{
+				cout << "指令不合法：数独游戏个数范围为1~10,000" << endl;
+				return 0;
+			}
+			int level = atoi(argv[4]);
+			sudo.gen_sudoku(n, level, nullptr, false);
+			sudo.makesudokutofile(n);
+			return 0;
+		}
+		else
+		{
+			cout << "指令不合法：指令格式为【sudoku.exe -n 20 -m 1】" << endl;
+			return 0;
+		}
 	}
-	makesudokutofile(sudokuNumber);
-	return;
+	else if (argc == 6)
+	{
+		if ((strcmp(argv[1], "-n") == 0) && (strcmp(argv[3], "-r") == 0))
+		{
+			int n = atoi(argv[2]);
+			if (n > 10000 || n < 1)
+			{
+				cout << "指令不合法：数独游戏个数范围为1~10,000" << endl;
+				return 0;
+			}
+			int hole1 = atoi(argv[4]);
+			int hole2 = atoi(argv[5]);
+			if (hole1 < 1 || hole2>80 || hole1 >= hole2)
+			{
+				cout << "指令不合法：挖空数量应该在1-80之间，并且格式为sudoku.exe -n 20 -r 10 20" << endl;
+				return 0;
+			}
+			int holeNumber[2] = { hole1,hole2 };
+			sudo.gen_sudoku(n, 0, holeNumber, false);
+			sudo.makesudokutofile(n);
+			return 0;
+		}
+		else
+		{
+			cout << "指令不合法：指令格式为【sudoku.exe -n 20 -r 10 50】" << endl;
+			return 0;
+		}
+	}
+	else
+	{
+		cout << "指令不合法：参数过多" << endl;
+		return 0;
+	}
+
+	return 0;
+
 }
+//质量分析用的主函数
+//int main()
+//{
+//	sudoku sudo;
+//	sudo.gen_sudoku_result(100);
+//	sudo.gen_sudoku(10, 0, nullptr, true);
+//	return 0;
+//}
