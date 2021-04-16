@@ -229,3 +229,75 @@ void sudoku::gen_sudoku(int num, int level, int* holeNumber, bool ifOnly)
 		}
 	}
 }
+bool sudoku::dfs(int current_sudoku_index, int row, int column, int sudo[][9])
+{
+	/*数独应该是9*9的,也就是说行和列都应该是0-8中的数字,所以顺序遍历应该第一个不合规的是第九行第十个数*/
+	if (column == 9)
+	{
+		if (row == 8)
+			return true;
+		//否则应该换到下一行
+		row++;
+		column = 0;
+	}
+	//若当前空格有数，就递归下一个位置
+	if (sudo[current_sudoku_index * 9 + row][column] != 0)
+	{
+		return dfs(current_sudoku_index, row, column + 1, sudo);
+	}
+	//若当前空格没有数字，就从1-9试
+	for (int i = 1; i < 10; i++)
+	{
+		if (is_right(current_sudoku_index, row, column, i, sudo))
+		{
+			sudo[current_sudoku_index * 9 + row][column] = i;
+			//再进行后面的空格填数，如果都成功了就直接返回，反之如果后续有
+			//无法满足的就会返回到这里换一个数进行尝试
+			if (dfs(current_sudoku_index, row, column + 1, sudo))
+				return true;
+		}
+	}
+	sudo[current_sudoku_index * 9 + row][column] = 0;
+	return false;
+}
+void sudoku::solve_sudoku(string filepath)
+{
+	ifstream readFile;
+	readFile.open(filepath.c_str());
+	if (readFile.is_open() == FALSE)
+	{
+		cout << "文件读取失败！请重试！" << endl;
+		return;
+	}
+	//读取的数字个数
+	int totalNumber = 0;
+	while (!readFile.eof())
+	{
+		readFile >> sudokuIn[totalNumber++];
+	}
+	//总行数
+	int row = totalNumber / 9;
+	//将char型转换成int型进行存储
+	int currentIndex = 0;
+	memset(result, 0, sizeof(result));
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < 9; j++)
+		{
+			if (sudokuIn[currentIndex] == '$')
+				result[i][j] = 0;
+			else
+				result[i][j] = sudokuIn[currentIndex] - '0';
+			currentIndex++;
+		}
+	}
+	//数独个数
+	int sudokuNumber = row / 9;
+	//深度优先对每个数独进行求解
+	for (int curSudoku = 0; curSudoku < sudokuNumber; curSudoku++)
+	{
+		dfs(curSudoku, 0, 0, result);
+	}
+	makesudokutofile(sudokuNumber);
+	return;
+}
